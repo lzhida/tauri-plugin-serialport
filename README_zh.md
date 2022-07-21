@@ -1,17 +1,9 @@
 
 # Tauri Plugin serialport
 
-A tauri plugin developed based on Serialport.
+基于 `serialport` 库开发的tauri插件。
 
-## Installation
-
-There are three general methods of installation that we can recommend.
-
-1. Pull sources directly from Github using git tags / revision hashes (most secure, good for developement, shown below)
-2. Git submodule install this repo in your tauri project and then use file protocol to ingest the source
-3. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked)
-
-For more details and usage see the example app. Please note, below in the dependencies you can also lock to a revision/tag in both the `Cargo.toml` and `package.json`
+## 安装
 
 ### RUST
 
