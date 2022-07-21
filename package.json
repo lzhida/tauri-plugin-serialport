@@ -1,8 +1,8 @@
 {
   "name": "tauri-plugin-serialport-api",
-  "version": "0.0.0",
-  "author": "You",
-  "description": "",
+  "version": "0.0.1",
+  "author": "lzhida <zhidal@qq.com>",
+  "description": "A tauri plugin developed based on Serialport.",
   "browser": "webview-dist/index.js",
   "main": "webview-dist/index.js",
   "types": "webview-dist/index.d.ts",
