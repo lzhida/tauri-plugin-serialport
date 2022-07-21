@@ -33,3 +33,4 @@ export declare function listen<T>(
   handler: (...args: any[]) => void,
 ): Promise<InvokeResult>
 
+export declare function available_ports(): Promise<string[]>
