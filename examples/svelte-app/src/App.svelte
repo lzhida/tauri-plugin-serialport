@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { execute } from 'tauri-plugin-serialport-api'
+	// import { execute } from 'tauri-plugin-serialport-api'
 
 	let response = ''
 
@@ -8,7 +8,7 @@
 	}
 
 	function _execute() {
-		execute().then(updateResponse).catch(updateResponse)
+		// execute().then(updateResponse).catch(updateResponse)
 	}
 </script>
 
