@@ -1,3 +1,4 @@
+
 # Tauri Plugin serialport
 
 A tauri plugin developed based on Serialport.
