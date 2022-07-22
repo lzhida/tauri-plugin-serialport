@@ -1,8 +1,8 @@
 [package]
 name = "tauri-plugin-serialport"
-version = "0.0.0"
-authors = [ "You" ]
-description = ""
+version = "0.0.3"
+authors = [ "lzhida" ]
+description = "A tauri plugin developed based on Serialport."
 edition = "2021"
 rust-version = "1.57"
 exclude = ["/examples", "/webview-dist", "/webview-src", "node_modules"]

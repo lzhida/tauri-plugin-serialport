@@ -1,3 +1,4 @@
+import { Event } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
 
@@ -14,6 +15,11 @@ export interface WriteOption {
 export interface ReadOptions {
   path: string;
   readEvent?: string;
+}
+
+export interface ReadDataResult {
+  size: number,
+  data: number[],
 }
 
 export async function open(options: OpenOption) {
@@ -43,13 +49,13 @@ export async function read(options: ReadOptions) {
   });
 }
 
-export async function listen<T>(
+export async function listen(
   event: string,
-  handler: (...args: any[]) => void,
+  handler: (event: Event<ReadDataResult>) => void,
 ) {
   try {
-    const listener = await appWindow.listen<T>(event, ({ event, payload }) => {
-      handler({ event, payload });
+    const listener = await appWindow.listen<ReadDataResult>(event, (event) => {
+      handler(event);
     });
     return Promise.resolve(listener);
   } catch (error) {

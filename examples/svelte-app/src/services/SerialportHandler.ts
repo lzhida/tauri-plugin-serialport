@@ -3,7 +3,7 @@
  * @Author: zhidal
  * @Date: 2022-07-20 17:02:07
  * @LastEditors: zhidal
- * @LastEditTime: 2022-07-22 10:02:53
+ * @LastEditTime: 2022-07-22 14:25:25
  */
 
 import { invoke } from '@tauri-apps/api/tauri';
@@ -163,10 +163,10 @@ class SerialportHandler {
   async listen(fn: (...args: any[]) => void): Promise<any> {
     try {
       await this.cancelListen();
-      this.listener = await listen<any>(this.readEvent, (args) => {
+      this.listener = await listen(this.readEvent, ({ payload }) => {
         try {
           const decoder = new TextDecoder(this.encoding);
-          const data = decoder.decode(new Uint8Array(args[1]?.data));
+          const data = decoder.decode(new Uint8Array(payload.data));
           fn(data);
         } catch (error) {
           console.error(error);
