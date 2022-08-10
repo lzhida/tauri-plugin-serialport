@@ -1,10 +1,10 @@
 <script lang="ts">
-	import SerialportHandler from './services/SerialportHandler';
+	import { Serialport } from 'tauri-plugin-serialport-api';
 
-	let serialport = null
+	let serialport: Serialport | undefined = undefined;
 
 	function openSerialport() {
-		serialport = new SerialportHandler({ path: "COM6", baudRate: 15200})
+		serialport = new Serialport({ path: "COM4", baudRate: 115200})
 		serialport.open().then((res) => {
 			console.log('open serialport', res);
 		}).catch(err => {
@@ -13,7 +13,7 @@
 	}
 
 	function available_ports() {
-		SerialportHandler.available_ports().then(res => {
+		Serialport.available_ports().then(res => {
 			console.log('available_ports: ', res);
 		}).catch(err => {
 			console.error(err);
