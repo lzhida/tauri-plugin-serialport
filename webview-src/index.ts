@@ -160,14 +160,6 @@ class Serialport {
   }
 
   /**
-   * @description: 取消读取串口信息
-   * @return {*}
-   */
-  cancelRead(): void {
-    this.isRead = false;
-  }
-
-  /**
    * @description: 获取串口列表
    * @return {*}
    */
@@ -237,6 +229,73 @@ class Serialport {
         code: -1,
         message: '取消串口监听失败!',
       });
+    }
+  }
+
+  /**
+   * @description:
+   * @param {object} options
+   * @return {Promise<void>}
+   */
+  async change(options: { path: string; baudRate: number }): Promise<void> {
+    try {
+      let isOpened = false;
+      if (this.isOpen) {
+        isOpened = true;
+        await this.close();
+      }
+      this.path = options.path;
+      this.baudRate = options.baudRate;
+      if (isOpened) {
+        await this.open();
+      }
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * @description: 设置串口 path
+   * @param {string} value
+   * @return {Promise<void>}
+   */
+  async setPath(value: string): Promise<void> {
+    try {
+      let isOpened = false;
+      if (this.isOpen) {
+        isOpened = true;
+        await this.close();
+      }
+      this.path = value;
+      if (isOpened) {
+        await this.open();
+      }
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * @description: 设置串口 波特率
+   * @param {number} value
+   * @return {Promise<void>}
+   */
+  async setBaudRate(value: number): Promise<void> {
+    try {
+      let isOpened = false;
+      if (this.isOpen) {
+        isOpened = true;
+        await this.close();
+      }
+      this.baudRate = value;
+      if (isOpened) {
+        await this.open();
+      }
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 }
