@@ -65,8 +65,8 @@ class Serialport {
         });
       }
       if (this.isOpen) {
-        return Promise.reject({
-          code: -1,
+        return Promise.resolve({
+          code: 2,
           message: `串口 ${this.path} 已经打开!`,
         });
       }
@@ -88,8 +88,8 @@ class Serialport {
   async close(): Promise<InvokeResult> {
     try {
       if (!this.isOpen) {
-        return Promise.reject({
-          code: -1,
+        return Promise.resolve({
+          code: 2,
           message: `串口 ${this.path} 未打开!`,
         });
       }
@@ -238,15 +238,20 @@ class Serialport {
    * @param {object} options
    * @return {Promise<void>}
    */
-  async change(options: { path: string; baudRate: number }): Promise<void> {
+  async change(options: { path?: string; baudRate?: number }): Promise<void> {
     try {
       let isOpened = false;
       if (this.isOpen) {
         isOpened = true;
         await this.close();
       }
-      this.path = options.path;
-      this.baudRate = options.baudRate;
+      if (options.path) {
+        this.path = options.path;
+        this.readEvent = options.path + '-data';
+      }
+      if (options.baudRate) {
+        this.baudRate = options.baudRate;
+      }
       if (isOpened) {
         await this.open();
       }
@@ -269,6 +274,7 @@ class Serialport {
         await this.close();
       }
       this.path = value;
+      this.readEvent = value + '-data';
       if (isOpened) {
         await this.open();
       }

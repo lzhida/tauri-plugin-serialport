@@ -68,8 +68,8 @@ declare class Serialport {
      * @return {Promise<void>}
      */
     change(options: {
-        path: string;
-        baudRate: number;
+        path?: string;
+        baudRate?: number;
     }): Promise<void>;
     /**
      * @description: 设置串口 path
