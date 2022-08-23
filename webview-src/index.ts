@@ -99,6 +99,7 @@ class Serialport {
 
       await this.cancelListen();
       this.isRead = false;
+      this.isOpen = false;
       return res;
     } catch (error) {
       return Promise.reject(error);

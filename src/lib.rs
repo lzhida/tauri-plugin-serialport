@@ -35,13 +35,13 @@ fn available_ports() -> Vec<String> {
         Err(_) => vec![],
     };
     list.sort_by(|a, b| a.port_name.cmp(&b.port_name));
-    println!("获取串口列表: {:?}", &list);
 
     let mut name_list: Vec<String> = vec![];
     for i in &list {
-        println!("串口名称: {}", i.port_name);
         name_list.push(i.port_name.clone());
     }
+
+    println!("串口列表: {:?}", &name_list);
 
     name_list
 }
