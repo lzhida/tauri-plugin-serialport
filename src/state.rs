@@ -2,7 +2,7 @@ use serde::Serialize;
 use serialport::{self, SerialPort};
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{mpsc::Sender, Arc, Mutex},
 };
 
 #[derive(Default)]
@@ -12,7 +12,7 @@ pub struct SerialportState {
 }
 pub struct SerialportInfo {
     pub serialport: Box<dyn SerialPort>,
-    pub is_reading: bool,
+    pub sender: Option<Sender<usize>>,
 }
 
 #[derive(Serialize, Clone)]

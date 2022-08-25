@@ -1,7 +1,8 @@
 use crate::error::Error;
 use crate::state::{ReadData, SerialportInfo, SerialportState};
 // use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
 use tauri::{command, AppHandle, Runtime, State, Window};
@@ -33,7 +34,7 @@ fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
 //         Ok(mut map) => match map.get_mut(&path) {
 //             Some(serialport_info) => return f(serialport_info),
 //             None => {
-//                 return Err(Error::String(format!("未找到串口")));
+//                 return Err(Error::String(format!("未找到 {} 串口", &path)));
 //             }
 //         },
 //         Err(error) => return Err(Error::String(format!("获取文件锁失败! {} ", error))),
@@ -68,7 +69,17 @@ pub async fn cancel_read<R: Runtime>(
     path: String,
 ) -> Result<(), Error> {
     get_serialport(state, path.clone(), |serialport_info| {
-        serialport_info.is_reading = false;
+        match &serialport_info.sender {
+            Some(sender) => match sender.send(1) {
+                Ok(_) => {
+                    return Ok(());
+                }
+                Err(error) => {
+                    return Err(Error::String(format!("取消串口数据读取失败: {}", error)));
+                }
+            },
+            None => {}
+        }
         println!("取消 {} 串口读取", &path);
         Ok(())
     })
@@ -117,7 +128,7 @@ pub fn open<R: Runtime>(
                 Ok(serial) => {
                     let data = SerialportInfo {
                         serialport: serial,
-                        is_reading: false,
+                        sender: None,
                     };
                     serialports.insert(path.clone(), data);
                     return Ok(());
@@ -144,23 +155,33 @@ pub fn read<R: Runtime>(
     path: String,
 ) -> Result<(), Error> {
     get_serialport(state.clone(), path.clone(), |serialport_info| {
-        if serialport_info.is_reading {
+        if serialport_info.sender.is_some() {
             println!("串口已经在读取数据中!");
             return Ok(());
         } else {
-            serialport_info.is_reading = true;
             let state = Arc::clone(&state.serialports);
             let read_event = format!("plugin-serialport-read-{}", &path);
+            let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
+            serialport_info.sender = Some(tx);
             thread::spawn(move || loop {
+                match rx.try_recv() {
+                    Ok(_) => {
+                        println!("停止读取数据!");
+                        break;
+                    }
+                    Err(error) => match error {
+                        TryRecvError::Disconnected => {
+                            println!("停止读取数据!");
+                            break;
+                        }
+                        TryRecvError::Empty => {}
+                    },
+                }
                 match state.try_lock() {
                     Ok(mut map) => {
                         println!("获取锁成功! {}, {}", path, read_event);
                         match map.get_mut(&path) {
                             Some(serial) => {
-                                if !serial.is_reading {
-                                    println!("停止读取数据!");
-                                    break;
-                                }
                                 println!("获取串口信息成功!");
                                 let mut serial_buf: Vec<u8> = vec![0; 1024];
                                 // println!("开始读取数据: {:?}", &serial_buf);
