@@ -81,6 +81,26 @@
         console.error(err);
       });
   }
+
+  function closeAll() {
+    Serialport.closeAll()
+      .then(() => {
+        console.log('删除全部成功!');
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
+
+  function forceClose() {
+    Serialport.forceClose('COM4')
+      .then(() => {
+        console.log('强制删除成功!');
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 </script>
 
 <div>
@@ -91,4 +111,6 @@
   <button on:click={read}>Read</button>
   <button on:click={listen}>listen</button>
   <button on:click={cancelRead}>cancelRead</button>
+  <button on:click={closeAll}>closeAll</button>
+  <button on:click={forceClose}>forceClose</button>
 </div>

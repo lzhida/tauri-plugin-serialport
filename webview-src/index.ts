@@ -49,7 +49,7 @@ class Serialport {
       flowControl: options.flowControl || null,
       parity: options.parity || null,
       stopBits: options.stopBits || 2,
-      timeout: options.timeout || 0.2,
+      timeout: options.timeout || 200,
     };
   }
 
@@ -63,6 +63,25 @@ class Serialport {
     } catch (error) {
       return Promise.reject(error);
     }
+  }
+
+  /**
+   * @description: 强制关闭
+   * @param {string} path
+   * @return {Promise<void>}
+   */
+  static async forceClose(path: string): Promise<void> {
+    return await invoke<void>('plugin:serialport|force_close', {
+      path,
+    });
+  }
+
+  /**
+   * @description: 关闭所有串口
+   * @return {Promise<void>}
+   */
+  static async closeAll(): Promise<void> {
+    return await invoke<void>('plugin:serialport|close_all');
   }
 
   /**
@@ -189,6 +208,11 @@ class Serialport {
       const res = await invoke<void>('plugin:serialport|open', {
         path: this.options.path,
         baudRate: this.options.baudRate,
+        dataBits: this.options.dataBits,
+        flowControl: this.options.flowControl,
+        parity: this.options.parity,
+        stopBits: this.options.stopBits,
+        timeout: this.options.timeout,
       });
       this.isOpen = true;
       return Promise.resolve(res);

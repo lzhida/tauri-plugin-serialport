@@ -1,6 +1,7 @@
 use crate::error::Error;
 use crate::state::{ReadData, SerialportInfo, SerialportState};
 // use std::collections::HashMap;
+use serialport::{DataBits, FlowControl, Parity, StopBits};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::sync::{mpsc, Arc};
 use std::thread;
@@ -41,6 +42,52 @@ fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
 //     }
 // }
 
+fn get_data_bits(value: Option<usize>) -> DataBits {
+    match value {
+        Some(value) => match value {
+            5 => DataBits::Five,
+            6 => DataBits::Six,
+            7 => DataBits::Seven,
+            8 => DataBits::Eight,
+            _ => DataBits::Eight,
+        },
+        None => DataBits::Eight,
+    }
+}
+
+fn get_flow_control(value: Option<String>) -> FlowControl {
+    match value {
+        Some(value) => match value.as_str() {
+            "Software" => FlowControl::Software,
+            "Hardware" => FlowControl::Hardware,
+            _ => FlowControl::None,
+        },
+        None => FlowControl::None,
+    }
+}
+
+fn get_parity(value: Option<String>) -> Parity {
+    match value {
+        Some(value) => match value.as_str() {
+            "Odd" => Parity::Odd,
+            "Even" => Parity::Even,
+            _ => Parity::None,
+        },
+        None => Parity::None,
+    }
+}
+
+fn get_stop_bits(value: Option<usize>) -> StopBits {
+    match value {
+        Some(value) => match value {
+            1 => StopBits::One,
+            2 => StopBits::Two,
+            _ => StopBits::Two,
+        },
+        None => StopBits::Two,
+    }
+}
+
 /// `available_ports` 获取串口列表
 #[command]
 pub fn available_ports() -> Vec<String> {
@@ -71,15 +118,14 @@ pub async fn cancel_read<R: Runtime>(
     get_serialport(state, path.clone(), |serialport_info| {
         match &serialport_info.sender {
             Some(sender) => match sender.send(1) {
-                Ok(_) => {
-                    return Ok(());
-                }
+                Ok(_) => {}
                 Err(error) => {
                     return Err(Error::String(format!("取消串口数据读取失败: {}", error)));
                 }
             },
             None => {}
         }
+        serialport_info.sender = None;
         println!("取消 {} 串口读取", &path);
         Ok(())
     })
@@ -107,6 +153,67 @@ pub fn close<R: Runtime>(
     }
 }
 
+/// `close_all` 关闭所有串口
+#[command]
+pub fn close_all<R: Runtime>(
+    _app: AppHandle<R>,
+    _window: Window<R>,
+    state: State<'_, SerialportState>,
+) -> Result<(), Error> {
+    match state.serialports.lock() {
+        Ok(mut map) => {
+            for serialport_info in map.values() {
+                if let Some(sender) = &serialport_info.sender {
+                    match sender.send(1) {
+                        Ok(_) => {}
+                        Err(error) => {
+                            println!("取消串口数据读取失败: {}", error);
+                            return Err(Error::String(format!("取消串口数据读取失败: {}", error)));
+                        }
+                    }
+                }
+            }
+            map.clear();
+            Ok(())
+        }
+        Err(error) => {
+            return Err(Error::String(format!("获取锁失败: {}", error)));
+        }
+    }
+}
+
+/// `force_close` 强制关闭串口
+#[command]
+pub fn force_close<R: Runtime>(
+    _app: AppHandle<R>,
+    _window: Window<R>,
+    state: State<'_, SerialportState>,
+    path: String,
+) -> Result<(), Error> {
+    match state.serialports.lock() {
+        Ok(mut map) => {
+            if let Some(serial) = map.get_mut(&path) {
+                if let Some(sender) = &serial.sender {
+                    match sender.send(1) {
+                        Ok(_) => {}
+                        Err(error) => {
+                            println!("取消串口数据读取失败: {}", error);
+                            return Err(Error::String(format!("取消串口数据读取失败: {}", error)));
+                        }
+                    }
+                }
+                map.remove(&path);
+                return Ok(());
+            } else {
+                return Ok(());
+            };
+        }
+        Err(error) => {
+            return Err(Error::String(format!("获取锁失败: {}", error)));
+        }
+    }
+}
+
 /// `open` 打开指定串口
 #[command]
 pub fn open<R: Runtime>(
@@ -115,6 +222,11 @@ pub fn open<R: Runtime>(
     state: State<'_, SerialportState>,
     path: String,
     baud_rate: u32,
+    data_bits: Option<usize>,
+    flow_control: Option<String>,
+    parity: Option<String>,
+    stop_bits: Option<usize>,
+    timeout: Option<u64>,
 ) -> Result<(), Error> {
     match state.serialports.lock() {
         Ok(mut serialports) => {
@@ -122,7 +234,11 @@ pub fn open<R: Runtime>(
                 return Err(Error::String(format!("串口 {} 已打开!", path.clone())));
             }
             match serialport::new(path.clone(), baud_rate)
-                .timeout(Duration::from_millis(200))
+                .data_bits(get_data_bits(data_bits))
+                .flow_control(get_flow_control(flow_control))
+                .parity(get_parity(parity))
+                .stop_bits(get_stop_bits(stop_bits))
+                .timeout(Duration::from_millis(timeout.unwrap_or(200)))
                 .open()
             {
                 Ok(serial) => {

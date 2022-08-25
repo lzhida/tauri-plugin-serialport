@@ -38,6 +38,17 @@ declare class Serialport {
      */
     static available_ports(): Promise<string[]>;
     /**
+     * @description: 强制关闭
+     * @param {string} path
+     * @return {Promise<void>}
+     */
+    static forceClose(path: string): Promise<void>;
+    /**
+     * @description: 关闭所有串口
+     * @return {Promise<void>}
+     */
+    static closeAll(): Promise<void>;
+    /**
      * @description: 取消串口监听
      * @return {Promise<void>}
      */
