@@ -17,51 +17,27 @@ export interface Options {
 declare class Serialport {
     path: string;
     baudRate: number;
-    isRead: boolean;
     isOpen: boolean;
     isWrite: boolean;
-    listener: any;
-    readEvent: string;
+    unListen: any;
     encoding: string;
     readInterval: number;
     constructor(options: Options);
     /**
-     * @description: 打开串口
-     * @return {*}
-     */
-    open(): Promise<InvokeResult>;
-    /**
-     * @description: 关闭串口
-     * @return {Promise<InvokeResult>}
-     */
-    close(): Promise<InvokeResult>;
-    /**
-     * @description: 串口写入数据
-     * @param {string} value
-     * @return {Promise<InvokeResult>}
-     */
-    write(value: string): Promise<InvokeResult>;
-    /**
-     * @description: 读取串口信息
-     * @return {*}
-     */
-    read(): Promise<any>;
-    /**
      * @description: 获取串口列表
-     * @return {*}
+     * @return {Promise<string[]>}
      */
-    static available_ports(): Promise<any>;
-    /**
-     * @description: 监听串口信息
-     * @param {function} fn
-     * @return {*}
-     */
-    listen(fn: (...args: any[]) => void): Promise<any>;
+    static available_ports(): Promise<string[]>;
     /**
      * @description: 取消串口监听
-     * @return {*}
+     * @return {Promise<void>}
      */
-    cancelListen(): Promise<any>;
+    cancelListen(): Promise<void>;
+    /**
+     * @description: 取消读取数据
+     * @return {Promise<void>}
+     */
+    cancelRead(): Promise<void>;
     /**
      * @description:
      * @param {object} options
@@ -72,16 +48,43 @@ declare class Serialport {
         baudRate?: number;
     }): Promise<void>;
     /**
-     * @description: 设置串口 path
-     * @param {string} value
-     * @return {Promise<void>}
+     * @description: 关闭串口
+     * @return {Promise<InvokeResult>}
      */
-    setPath(value: string): Promise<void>;
+    close(): Promise<InvokeResult>;
+    /**
+     * @description: 监听串口信息
+     * @param {function} fn
+     * @return {*}
+     */
+    listen(fn: (...args: any[]) => void): Promise<any>;
+    /**
+     * @description: 打开串口
+     * @return {*}
+     */
+    open(): Promise<InvokeResult>;
+    /**
+     * @description: 读取串口信息
+     * @return {*}
+     */
+    read(): Promise<any>;
     /**
      * @description: 设置串口 波特率
      * @param {number} value
      * @return {Promise<void>}
      */
     setBaudRate(value: number): Promise<void>;
+    /**
+     * @description: 设置串口 path
+     * @param {string} value
+     * @return {Promise<void>}
+     */
+    setPath(value: string): Promise<void>;
+    /**
+     * @description: 串口写入数据
+     * @param {string} value
+     * @return {Promise<InvokeResult>}
+     */
+    write(value: string): Promise<InvokeResult>;
 }
 export { Serialport };
