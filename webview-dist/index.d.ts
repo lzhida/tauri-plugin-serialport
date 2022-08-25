@@ -1,3 +1,4 @@
+import { UnlistenFn } from '@tauri-apps/api/event';
 export interface InvokeResult {
     code: number;
     message: string;
@@ -6,23 +7,31 @@ export interface ReadDataResult {
     size: number;
     data: number[];
 }
-export interface Options {
+export interface SerialportOptions {
     path: string;
     baudRate: number;
-    readEvent?: string;
     encoding?: string;
-    readInterval?: number;
+    dataBits?: 5 | 6 | 7 | 8;
+    flowControl?: null | 'Software' | 'Hardware';
+    parity?: null | 'Odd' | 'Even';
+    stopBits?: 1 | 2;
+    timeout?: number;
+    [key: string]: any;
+}
+interface Options {
+    dataBits: 5 | 6 | 7 | 8;
+    flowControl: null | 'Software' | 'Hardware';
+    parity: null | 'Odd' | 'Even';
+    stopBits: 1 | 2;
+    timeout: number;
     [key: string]: any;
 }
 declare class Serialport {
-    path: string;
-    baudRate: number;
     isOpen: boolean;
-    isWrite: boolean;
-    unListen: any;
+    unListen?: UnlistenFn;
     encoding: string;
-    readInterval: number;
-    constructor(options: Options);
+    options: Options;
+    constructor(options: SerialportOptions);
     /**
      * @description: 获取串口列表
      * @return {Promise<string[]>}
@@ -51,23 +60,23 @@ declare class Serialport {
      * @description: 关闭串口
      * @return {Promise<InvokeResult>}
      */
-    close(): Promise<InvokeResult>;
+    close(): Promise<void>;
     /**
      * @description: 监听串口信息
      * @param {function} fn
-     * @return {*}
+     * @return {Promise<void>}
      */
-    listen(fn: (...args: any[]) => void): Promise<any>;
+    listen(fn: (...args: any[]) => void): Promise<void>;
     /**
      * @description: 打开串口
      * @return {*}
      */
-    open(): Promise<InvokeResult>;
+    open(): Promise<void>;
     /**
      * @description: 读取串口信息
-     * @return {*}
+     * @return {Promise<void>}
      */
-    read(): Promise<any>;
+    read(): Promise<void>;
     /**
      * @description: 设置串口 波特率
      * @param {number} value
@@ -83,8 +92,8 @@ declare class Serialport {
     /**
      * @description: 串口写入数据
      * @param {string} value
-     * @return {Promise<InvokeResult>}
+     * @return {Promise<number>}
      */
-    write(value: string): Promise<InvokeResult>;
+    write(value: string): Promise<number>;
 }
 export { Serialport };

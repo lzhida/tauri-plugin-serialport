@@ -18,8 +18,6 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("{0}")]
     String(String),
-    #[error("{{ code: {code}, message: {message} }}")]
-    InvokeResult { code: i32, message: String },
 }
 
 impl Serialize for Error {
