@@ -2,8 +2,8 @@ use crate::error::Error;
 use crate::state::{ReadData, SerialportInfo, SerialportState};
 // use std::collections::HashMap;
 use serialport::{DataBits, FlowControl, Parity, StopBits};
+use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
-use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
 use tauri::{command, AppHandle, Runtime, State, Window};
@@ -269,70 +269,62 @@ pub fn read<R: Runtime>(
     window: Window<R>,
     state: State<'_, SerialportState>,
     path: String,
+    timeout: Option<u64>,
 ) -> Result<(), Error> {
     get_serialport(state.clone(), path.clone(), |serialport_info| {
         if serialport_info.sender.is_some() {
             println!("串口已经在读取数据中!");
             return Ok(());
         } else {
-            let state = Arc::clone(&state.serialports);
-            let read_event = format!("plugin-serialport-read-{}", &path);
-            let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
-            serialport_info.sender = Some(tx);
-            thread::spawn(move || loop {
-                match rx.try_recv() {
-                    Ok(_) => {
-                        println!("停止读取数据!");
-                        break;
-                    }
-                    Err(error) => match error {
-                        TryRecvError::Disconnected => {
-                            println!("停止读取数据!");
-                            break;
+            match serialport_info.serialport.try_clone() {
+                Ok(mut serial) => {
+                    let read_event = format!("plugin-serialport-read-{}", &path);
+                    let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
+                    serialport_info.sender = Some(tx);
+                    thread::spawn(move || loop {
+                        match rx.try_recv() {
+                            Ok(_) => {
+                                println!("停止读取数据!");
+                                break;
+                            }
+                            Err(error) => match error {
+                                TryRecvError::Disconnected => {
+                                    println!("停止读取数据!");
+                                    break;
+                                }
+                                TryRecvError::Empty => {}
+                            },
                         }
-                        TryRecvError::Empty => {}
-                    },
-                }
-                match state.try_lock() {
-                    Ok(mut map) => {
-                        println!("获取锁成功! {}, {}", path, read_event);
-                        match map.get_mut(&path) {
-                            Some(serial) => {
-                                println!("获取串口信息成功!");
-                                let mut serial_buf: Vec<u8> = vec![0; 1024];
-                                // println!("开始读取数据: {:?}", &serial_buf);
-                                match serial.serialport.read(serial_buf.as_mut_slice()) {
-                                    Ok(size) => {
-                                        println!("读取数据: {}, {:?}", size, &serial_buf[..size]);
-                                        match window.emit(
-                                            &read_event,
-                                            ReadData {
-                                                data: &serial_buf[..size],
-                                                size,
-                                            },
-                                        ) {
-                                            Ok(_) => {}
-                                            Err(error) => {
-                                                println!("发送数据失败: {}", error)
-                                            }
-                                        }
-                                    }
-                                    Err(_err) => {
-                                        // println!("读取数据失败! {:?}", err);
+                        println!("获取串口信息成功!");
+                        let mut serial_buf: Vec<u8> = vec![0; 1024];
+                        // println!("开始读取数据: {:?}", &serial_buf);
+                        match serial.read(serial_buf.as_mut_slice()) {
+                            Ok(size) => {
+                                println!("读取数据: {}, {:?}", size, &serial_buf[..size]);
+                                match window.emit(
+                                    &read_event,
+                                    ReadData {
+                                        data: &serial_buf[..size],
+                                        size,
+                                    },
+                                ) {
+                                    Ok(_) => {}
+                                    Err(error) => {
+                                        println!("发送数据失败: {}", error)
                                     }
                                 }
                             }
-                            None => {
-                                println!("获取串口失败!");
+                            Err(_err) => {
+                                // println!("读取数据失败! {:?}", err);
                             }
                         }
-                    }
-                    Err(error) => {
-                        println!("获取锁失败: {}", error);
-                    }
-                };
-                thread::sleep(Duration::from_secs(1));
-            });
+                        thread::sleep(Duration::from_millis(timeout.unwrap_or(200)));
+                    });
+                }
+                Err(error) => {
+                    return Err(Error::String(format!("读取 {} 串口失败: {}", &path, error)));
+                }
+            }
             return Ok(());
         }
     })
