@@ -223,12 +223,14 @@ class Serialport {
 
   /**
    * @description: 读取串口信息
+   * @param {number} timeout 读取速度，单位毫秒
    * @return {Promise<void>}
    */
-  async read(): Promise<void> {
+  async read(timeout?: number): Promise<void> {
     try {
       return await invoke<void>('plugin:serialport|read', {
         path: this.options.path,
+        timeout: timeout || this.options.timeout,
       });
     } catch (error) {
       return Promise.reject(error);

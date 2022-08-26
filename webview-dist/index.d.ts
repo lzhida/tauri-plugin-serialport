@@ -85,9 +85,10 @@ declare class Serialport {
     open(): Promise<void>;
     /**
      * @description: 读取串口信息
+     * @param {number} timeout 读取速度，单位毫秒
      * @return {Promise<void>}
      */
-    read(): Promise<void>;
+    read(timeout?: number): Promise<void>;
     /**
      * @description: 设置串口 波特率
      * @param {number} value
