@@ -21,6 +21,7 @@ export interface SerialportOptions {
   parity?: null | 'Odd' | 'Even';
   stopBits?: 1 | 2;
   timeout?: number;
+  size?: number;
   [key: string]: any;
 }
 
@@ -33,11 +34,17 @@ interface Options {
   [key: string]: any;
 }
 
+interface ReadOptions {
+  timeout?: number;
+  size?: number;
+}
+
 class Serialport {
   isOpen: boolean;
   unListen?: UnlistenFn;
   encoding: string;
   options: Options;
+  size: number;
 
   constructor(options: SerialportOptions) {
     this.isOpen = false;
@@ -51,6 +58,7 @@ class Serialport {
       stopBits: options.stopBits || 2,
       timeout: options.timeout || 200,
     };
+    this.size = options.size || 1024;
   }
 
   /**
@@ -223,14 +231,15 @@ class Serialport {
 
   /**
    * @description: 读取串口信息
-   * @param {number} timeout 读取速度，单位毫秒
+   * @param {ReadOptions} 读取选项 { timeout, size }
    * @return {Promise<void>}
    */
-  async read(timeout?: number): Promise<void> {
+  async read(options?: ReadOptions): Promise<void> {
     try {
       return await invoke<void>('plugin:serialport|read', {
         path: this.options.path,
-        timeout: timeout || this.options.timeout,
+        timeout: options?.timeout || this.options.timeout,
+        size: options?.size || this.size,
       });
     } catch (error) {
       return Promise.reject(error);

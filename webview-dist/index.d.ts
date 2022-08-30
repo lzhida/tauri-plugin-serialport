@@ -16,6 +16,7 @@ export interface SerialportOptions {
     parity?: null | 'Odd' | 'Even';
     stopBits?: 1 | 2;
     timeout?: number;
+    size?: number;
     [key: string]: any;
 }
 interface Options {
@@ -26,11 +27,16 @@ interface Options {
     timeout: number;
     [key: string]: any;
 }
+interface ReadOptions {
+    timeout?: number;
+    size?: number;
+}
 declare class Serialport {
     isOpen: boolean;
     unListen?: UnlistenFn;
     encoding: string;
     options: Options;
+    size: number;
     constructor(options: SerialportOptions);
     /**
      * @description: 获取串口列表
@@ -85,10 +91,10 @@ declare class Serialport {
     open(): Promise<void>;
     /**
      * @description: 读取串口信息
-     * @param {number} timeout 读取速度，单位毫秒
+     * @param {ReadOptions} 读取选项 { timeout, size }
      * @return {Promise<void>}
      */
-    read(timeout?: number): Promise<void>;
+    read(options?: ReadOptions): Promise<void>;
     /**
      * @description: 设置串口 波特率
      * @param {number} value

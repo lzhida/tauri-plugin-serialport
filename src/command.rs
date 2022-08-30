@@ -270,12 +270,14 @@ pub fn read<R: Runtime>(
     state: State<'_, SerialportState>,
     path: String,
     timeout: Option<u64>,
+    size: Option<usize>,
 ) -> Result<(), Error> {
     get_serialport(state.clone(), path.clone(), |serialport_info| {
         if serialport_info.sender.is_some() {
-            println!("串口已经在读取数据中!");
+            println!("串口 {} 已经在读取数据中!", &path);
             return Ok(());
         } else {
+            println!("串口 {} 开始读取数据!", &path);
             match serialport_info.serialport.try_clone() {
                 Ok(mut serial) => {
                     let read_event = format!("plugin-serialport-read-{}", &path);
@@ -284,23 +286,21 @@ pub fn read<R: Runtime>(
                     thread::spawn(move || loop {
                         match rx.try_recv() {
                             Ok(_) => {
-                                println!("停止读取数据!");
+                                println!("串口 {} 停止读取数据!", &path);
                                 break;
                             }
                             Err(error) => match error {
                                 TryRecvError::Disconnected => {
-                                    println!("停止读取数据!");
+                                    println!("串口 {} 断开连接!", &path);
                                     break;
                                 }
                                 TryRecvError::Empty => {}
                             },
                         }
-                        println!("获取串口信息成功!");
-                        let mut serial_buf: Vec<u8> = vec![0; 1024];
-                        // println!("开始读取数据: {:?}", &serial_buf);
+                        let mut serial_buf: Vec<u8> = vec![0; size.unwrap_or(1024)];
                         match serial.read(serial_buf.as_mut_slice()) {
                             Ok(size) => {
-                                println!("读取数据: {}, {:?}", size, &serial_buf[..size]);
+                                println!("串口 {} 读取数据大小: {}", &path, size);
                                 match window.emit(
                                     &read_event,
                                     ReadData {
