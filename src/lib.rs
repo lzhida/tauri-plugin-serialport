@@ -3,7 +3,7 @@ use tauri::{
     Manager, Runtime,
 };
 
-use command::{available_ports, cancel_read, close, close_all, force_close, open, read, write};
+use command::{available_ports, cancel_read, close, close_all, force_close, open, read, write, write_binary};
 use state::SerialportState;
 use std::{
     collections::HashMap,
@@ -26,6 +26,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             open,
             read,
             write,
+            write_binary,
         ])
         .setup(move |app_handle| {
             app_handle.manage(SerialportState {

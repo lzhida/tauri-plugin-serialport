@@ -176,7 +176,7 @@ class Serialport {
    * @param {function} fn
    * @return {Promise<void>}
    */
-  async listen(fn: (...args: any[]) => void): Promise<void> {
+  async listen(fn: (...args: any[]) => void, isDecode = true): Promise<void> {
     try {
       await this.cancelListen();
       let readEvent = 'plugin-serialport-read-' + this.options.path;
@@ -184,9 +184,13 @@ class Serialport {
         readEvent,
         ({ payload }) => {
           try {
-            const decoder = new TextDecoder(this.encoding);
-            const data = decoder.decode(new Uint8Array(payload.data));
-            fn(data);
+            if (isDecode) {
+              const decoder = new TextDecoder(this.encoding);
+              const data = decoder.decode(new Uint8Array(payload.data));
+              fn(data);
+            } else {
+              fn(new Uint8Array(payload.data));
+            }
           } catch (error) {
             console.error(error);
           }
@@ -231,7 +235,7 @@ class Serialport {
 
   /**
    * @description: 读取串口信息
-   * @param {ReadOptions} 读取选项 { timeout, size }
+   * @param {ReadOptions} options 读取选项 { timeout, size }
    * @return {Promise<void>}
    */
   async read(options?: ReadOptions): Promise<void> {
@@ -295,15 +299,60 @@ class Serialport {
    * @param {string} value
    * @return {Promise<number>}
    */
-  async write(value: string): Promise<number> {
+  async write(value: string | Uint8Array | number[]): Promise<number> {
     try {
       if (!this.isOpen) {
         return Promise.reject(`串口 ${this.options.path} 未打开!`);
       }
-      return await invoke<number>('plugin:serialport|write', {
-        value,
-        path: this.options.path,
-      });
+      if (typeof value === 'string') {
+        return await invoke<number>('plugin:serialport|write', {
+          value,
+          path: this.options.path,
+        });
+      } else {
+        if (value instanceof Uint8Array) {
+          return await invoke<number>('plugin:serialport|write_binary', {
+            value: Array.from(value),
+            path: this.options.path,
+          });
+        } else if (value instanceof Array) {
+          return await invoke<number>('plugin:serialport|write_binary', {
+            value,
+            path: this.options.path,
+          });
+        } else {
+          return Promise.reject('value 参数类型错误! 期望类型: string, Uint8Array, number[]');
+        }
+      }
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * @description: 写入二进制数据到串口
+   * @param {Uint8Array} value
+   * @return {Promise<number>}
+   */
+  async writeBinary(value: Uint8Array | number[]): Promise<number> {
+    try {
+      
+      if (!this.isOpen) {
+        return Promise.reject(`串口 ${this.options.path} 未打开!`);
+      }
+      if (value instanceof Uint8Array) {
+        return await invoke<number>('plugin:serialport|write_binary', {
+          value: Array.from(value),
+          path: this.options.path,
+        });
+      } else if (value instanceof Array) {
+        return await invoke<number>('plugin:serialport|write_binary', {
+          value,
+          path: this.options.path,
+        });
+      } else {
+        return Promise.reject('value 参数类型错误! 期望类型: string, Uint8Array, number[]');
+      }
     } catch (error) {
       return Promise.reject(error);
     }

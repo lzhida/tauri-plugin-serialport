@@ -4,7 +4,7 @@
   let serialport: Serialport | undefined = undefined;
 
   function openSerialport() {
-    serialport = new Serialport({ path: 'COM4', baudRate: 115200 });
+    serialport = new Serialport({ path: '/dev/ttyUSB0', baudRate: 9600 });
     serialport
       .open()
       .then((res) => {
@@ -38,7 +38,7 @@
 
   function write() {
     serialport
-      .write('TEST')
+      .write([1, 2, 3, 4, 5,])
       .then((res) => {
         console.log('write serialport: ', res);
       })
@@ -47,9 +47,21 @@
       });
   }
 
+  function writeBinary() {
+    serialport
+      .writeBinary(new Uint8Array([1, 2, 3, 4, 5,]))
+      .then((res) => {
+        console.log('write binary serialport: ', res);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
+
+
   function read() {
     serialport
-      .read()
+      .read({ timeout: 1 * 1000 })
       .then((res) => {
         console.log('read serialport: ', res);
       })
@@ -62,7 +74,7 @@
     serialport
       .listen((data: any[]) => {
         console.log('listen serialport data: ', data);
-      })
+      }, false)
       .then((res) => {
         console.log('listen serialport: ', res);
       })
@@ -108,6 +120,7 @@
   <button on:click={openSerialport}>Open</button>
   <button on:click={close}>Close</button>
   <button on:click={write}>Write</button>
+  <button on:click={writeBinary}>writeBinary</button>
   <button on:click={read}>Read</button>
   <button on:click={listen}>listen</button>
   <button on:click={cancelRead}>cancelRead</button>

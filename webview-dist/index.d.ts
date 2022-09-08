@@ -83,7 +83,7 @@ declare class Serialport {
      * @param {function} fn
      * @return {Promise<void>}
      */
-    listen(fn: (...args: any[]) => void): Promise<void>;
+    listen(fn: (...args: any[]) => void, isDecode?: boolean): Promise<void>;
     /**
      * @description: 打开串口
      * @return {*}
@@ -91,7 +91,7 @@ declare class Serialport {
     open(): Promise<void>;
     /**
      * @description: 读取串口信息
-     * @param {ReadOptions} 读取选项 { timeout, size }
+     * @param {ReadOptions} options 读取选项 { timeout, size }
      * @return {Promise<void>}
      */
     read(options?: ReadOptions): Promise<void>;
@@ -112,6 +112,12 @@ declare class Serialport {
      * @param {string} value
      * @return {Promise<number>}
      */
-    write(value: string): Promise<number>;
+    write(value: string | Uint8Array | number[]): Promise<number>;
+    /**
+     * @description: 写入二进制数据到串口
+     * @param {Uint8Array} value
+     * @return {Promise<number>}
+     */
+    writeBinary(value: Uint8Array | number[]): Promise<number>;
 }
 export { Serialport };
