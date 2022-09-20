@@ -299,31 +299,15 @@ class Serialport {
    * @param {string} value
    * @return {Promise<number>}
    */
-  async write(value: string | Uint8Array | number[]): Promise<number> {
+  async write(value: string): Promise<number> {
     try {
       if (!this.isOpen) {
         return Promise.reject(`串口 ${this.options.path} 未打开!`);
       }
-      if (typeof value === 'string') {
-        return await invoke<number>('plugin:serialport|write', {
-          value,
-          path: this.options.path,
-        });
-      } else {
-        if (value instanceof Uint8Array) {
-          return await invoke<number>('plugin:serialport|write_binary', {
-            value: Array.from(value),
-            path: this.options.path,
-          });
-        } else if (value instanceof Array) {
-          return await invoke<number>('plugin:serialport|write_binary', {
-            value,
-            path: this.options.path,
-          });
-        } else {
-          return Promise.reject('value 参数类型错误! 期望类型: string, Uint8Array, number[]');
-        }
-      }
+      return await invoke<number>('plugin:serialport|write', {
+        value,
+        path: this.options.path,
+      });
     } catch (error) {
       return Promise.reject(error);
     }
@@ -336,22 +320,18 @@ class Serialport {
    */
   async writeBinary(value: Uint8Array | number[]): Promise<number> {
     try {
-      
       if (!this.isOpen) {
         return Promise.reject(`串口 ${this.options.path} 未打开!`);
       }
-      if (value instanceof Uint8Array) {
+      if (value instanceof Uint8Array || value instanceof Array) {
         return await invoke<number>('plugin:serialport|write_binary', {
           value: Array.from(value),
           path: this.options.path,
         });
-      } else if (value instanceof Array) {
-        return await invoke<number>('plugin:serialport|write_binary', {
-          value,
-          path: this.options.path,
-        });
       } else {
-        return Promise.reject('value 参数类型错误! 期望类型: string, Uint8Array, number[]');
+        return Promise.reject(
+          'value 参数类型错误! 期望类型: string, Uint8Array, number[]',
+        );
       }
     } catch (error) {
       return Promise.reject(error);

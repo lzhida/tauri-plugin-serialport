@@ -4,7 +4,7 @@
   let serialport: Serialport | undefined = undefined;
 
   function openSerialport() {
-    serialport = new Serialport({ path: '/dev/ttyUSB0', baudRate: 9600 });
+    serialport = new Serialport({ path: 'COM10', baudRate: 9600 });
     serialport
       .open()
       .then((res) => {
@@ -38,7 +38,7 @@
 
   function write() {
     serialport
-      .write([1, 2, 3, 4, 5,])
+      .write('1234')
       .then((res) => {
         console.log('write serialport: ', res);
       })
@@ -49,7 +49,7 @@
 
   function writeBinary() {
     serialport
-      .writeBinary(new Uint8Array([1, 2, 3, 4, 5,]))
+      .writeBinary(new Uint8Array([1, 2, 3, 4, 5]))
       .then((res) => {
         console.log('write binary serialport: ', res);
       })
@@ -57,7 +57,6 @@
         console.error(err);
       });
   }
-
 
   function read() {
     serialport

@@ -112,7 +112,7 @@ declare class Serialport {
      * @param {string} value
      * @return {Promise<number>}
      */
-    write(value: string | Uint8Array | number[]): Promise<number>;
+    write(value: string): Promise<number>;
     /**
      * @description: 写入二进制数据到串口
      * @param {Uint8Array} value
