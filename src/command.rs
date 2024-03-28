@@ -1,7 +1,7 @@
 use crate::error::Error;
 use crate::state::{ReadData, SerialportInfo, SerialportState};
-// use std::collections::HashMap;
-use serialport::{DataBits, FlowControl, Parity, StopBits};
+use serialport5::{DataBits, FlowControl, Parity, SerialPort, StopBits};
+use std::io::{Read, Write};
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
@@ -17,11 +17,9 @@ fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
     match state.serialports.lock() {
         Ok(mut map) => match map.get_mut(&path) {
             Some(serialport_info) => f(serialport_info),
-            None => {
-                Err(Error::String("未找到串口".to_string()))
-            }
+            None => Err(Error::String("未找到串口".to_string())),
         },
-        Err(error) =>  Err(Error::String(format!("获取文件锁失败! {} ", error))),
+        Err(error) => Err(Error::String(format!("获取文件锁失败! {} ", error))),
     }
 }
 
@@ -74,7 +72,7 @@ fn get_stop_bits(value: Option<usize>) -> StopBits {
 /// `available_ports` 获取串口列表
 #[command]
 pub fn available_ports() -> Vec<String> {
-    let mut list = match serialport::available_ports() {
+    let mut list = match serialport5::available_ports() {
         Ok(list) => list,
         Err(_) => vec![],
     };
@@ -130,9 +128,7 @@ pub fn close<R: Runtime>(
                 Err(Error::String(format!("串口 {} 未打开!", &path)))
             }
         }
-        Err(error) => {
-            Err(Error::String(format!("获取锁失败: {}", error)))
-        }
+        Err(error) => Err(Error::String(format!("获取锁失败: {}", error))),
     }
 }
 
@@ -159,9 +155,7 @@ pub fn close_all<R: Runtime>(
             map.clear();
             Ok(())
         }
-        Err(error) => {
-            Err(Error::String(format!("获取锁失败: {}", error)))
-        }
+        Err(error) => Err(Error::String(format!("获取锁失败: {}", error))),
     }
 }
 
@@ -191,9 +185,7 @@ pub fn force_close<R: Runtime>(
                 Ok(())
             }
         }
-        Err(error) => {
-            Err(Error::String(format!("获取锁失败: {}", error)))
-        }
+        Err(error) => Err(Error::String(format!("获取锁失败: {}", error))),
     }
 }
 
@@ -216,13 +208,15 @@ pub fn open<R: Runtime>(
             if serialports.contains_key(&path) {
                 return Err(Error::String(format!("串口 {} 已打开!", path)));
             }
-            match serialport::new(path.clone(), baud_rate)
+            match SerialPort::builder()
+                .baud_rate(baud_rate)
                 .data_bits(get_data_bits(data_bits))
                 .flow_control(get_flow_control(flow_control))
                 .parity(get_parity(parity))
                 .stop_bits(get_stop_bits(stop_bits))
-                .timeout(Duration::from_millis(timeout.unwrap_or(200)))
-                .open()
+                .read_timeout(Some(Duration::from_millis(timeout.unwrap_or(200))))
+                .write_timeout(Some(Duration::from_millis(timeout.unwrap_or(200))))
+                .open(&path)
             {
                 Ok(serial) => {
                     let data = SerialportInfo {
@@ -234,14 +228,11 @@ pub fn open<R: Runtime>(
                 }
                 Err(error) => Err(Error::String(format!(
                     "创建串口 {} 失败: {}",
-                    path,
-                    error.description
+                    path, error.description
                 ))),
             }
         }
-        Err(error) => {
-            Err(Error::String(format!("获取锁失败: {}", error)))
-        }
+        Err(error) => Err(Error::String(format!("获取锁失败: {}", error))),
     }
 }
 
@@ -322,18 +313,15 @@ pub fn write<R: Runtime>(
     path: String,
     value: String,
 ) -> Result<usize, Error> {
-    get_serialport(state, path.clone(), |serialport_info| {
-        match serialport_info.serialport.write(value.as_bytes()) {
-            Ok(size) => {
-                Ok(size)
-        }
-            Err(error) => {
-                Err(Error::String(format!(
-                    "写入串口 {} 数据失败: {}",
-                    &path, error
-                )))
-            }
-        }
+    get_serialport(state, path.clone(), |serialport_info| match serialport_info
+        .serialport
+        .write(value.as_bytes())
+    {
+        Ok(size) => Ok(size),
+        Err(error) => Err(Error::String(format!(
+            "写入串口 {} 数据失败: {}",
+            &path, error
+        ))),
     })
 }
 
@@ -350,14 +338,10 @@ pub fn write_binary<R: Runtime>(
         .serialport
         .write(&value)
     {
-        Ok(size) => {
-            Ok(size)
-        }
-        Err(error) => {
-            Err(Error::String(format!(
-                "写入串口 {} 数据失败: {}",
-                &path, error
-            )))
-        }
+        Ok(size) => Ok(size),
+        Err(error) => Err(Error::String(format!(
+            "写入串口 {} 数据失败: {}",
+            &path, error
+        ))),
     })
 }

@@ -1,5 +1,5 @@
 use serde::Serialize;
-use serialport::{self, SerialPort};
+use serialport5::{self, SerialPort};
 use std::{
     collections::HashMap,
     sync::{mpsc::Sender, Arc, Mutex},
@@ -11,7 +11,7 @@ pub struct SerialportState {
     pub serialports: Arc<Mutex<HashMap<String, SerialportInfo>>>,
 }
 pub struct SerialportInfo {
-    pub serialport: Box<dyn SerialPort>,
+    pub serialport: SerialPort,
     pub sender: Option<Sender<usize>>,
 }
 
