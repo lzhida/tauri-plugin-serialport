@@ -47,18 +47,29 @@ class Serialport {
   size: number;
 
   constructor(options: SerialportOptions) {
+    const {
+      encoding = 'utf-8',
+      path,
+      baudRate,
+      dataBits = 8,
+      flowControl,
+      parity,
+      stopBits = 2,
+      timeout = 200,
+      size = 1024,
+    } = options;
     this.isOpen = false;
-    this.encoding = options.encoding || 'utf-8';
+    this.encoding = encoding;
     this.options = {
-      path: options.path,
-      baudRate: options.baudRate,
-      dataBits: options.dataBits || 8,
-      flowControl: options.flowControl || null,
-      parity: options.parity || null,
-      stopBits: options.stopBits || 2,
-      timeout: options.timeout || 200,
+      path: path,
+      baudRate: baudRate,
+      dataBits: dataBits,
+      flowControl: flowControl || null,
+      parity: parity || null,
+      stopBits: stopBits,
+      timeout: timeout,
     };
-    this.size = options.size || 1024;
+    this.size = size;
   }
 
   /**

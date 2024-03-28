@@ -3,8 +3,11 @@
 
   let serialport: Serialport | undefined = undefined;
 
+  let path = 'COM18';
+  let baudRate = 9600;
+
   function openSerialport() {
-    serialport = new Serialport({ path: 'COM10', baudRate: 9600 });
+    serialport = new Serialport({ path: path, baudRate: baudRate });
     serialport
       .open()
       .then((res) => {
@@ -104,7 +107,7 @@
   }
 
   function forceClose() {
-    Serialport.forceClose('COM4')
+    Serialport.forceClose(path)
       .then(() => {
         console.log('强制删除成功!');
       })

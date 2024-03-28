@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 use tauri::{command, AppHandle, Runtime, State, Window};
 
-/// `get_worksheet` 根据 `path` 和 `sheet_name` 获取文件 sheet 实例。
+/// `get_serialport` 根据 `path` 和 `sheet_name` 获取文件 sheet 实例。
 fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
     state: State<'_, SerialportState>,
     path: String,
@@ -24,23 +24,6 @@ fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
         Err(error) =>  Err(Error::String(format!("获取文件锁失败! {} ", error))),
     }
 }
-
-/// `get_worksheet` 根据 `path` 和 `sheet_name` 获取文件 sheet 实例。
-// fn try_get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
-//     state: Arc<std::sync::Mutex<HashMap<std::string::String, SerialportInfo>>>,
-//     path: String,
-//     f: F,
-// ) -> Result<T, Error> {
-//     match state.try_lock() {
-//         Ok(mut map) => match map.get_mut(&path) {
-//             Some(serialport_info) => return f(serialport_info),
-//             None => {
-//                 return Err(Error::String(format!("未找到 {} 串口", &path)));
-//             }
-//         },
-//         Err(error) => return Err(Error::String(format!("获取文件锁失败! {} ", error))),
-//     }
-// }
 
 fn get_data_bits(value: Option<usize>) -> DataBits {
     match value {
