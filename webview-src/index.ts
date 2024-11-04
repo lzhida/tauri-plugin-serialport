@@ -162,7 +162,7 @@ class Serialport {
    */
   async listen(fn: (...args: any[]) => void, isDecode = true) {
     await this.cancelListen();
-    let readEvent = 'plugin-serialport-read-' + this.options.path;
+    let readEvent = 'plugin-serialport-read-' + btoa(this.options.path);
     this.unListen = await appWindow.listen<ReadDataResult>(
       readEvent,
       ({ payload }) => {

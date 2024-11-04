@@ -720,7 +720,7 @@ class k {
    */
   async listen(e, t = !0) {
     await this.cancelListen();
-    let i = "plugin-serialport-read-" + this.options.path;
+    let i = "plugin-serialport-read-" + btoa(this.options.path);
     this.unListen = await g.listen(
       i,
       ({ payload: n }) => {

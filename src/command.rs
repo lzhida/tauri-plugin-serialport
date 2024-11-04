@@ -1,5 +1,7 @@
 use crate::error::Error;
 use crate::state::{ReadData, SerialportInfo, SerialportState};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use serialport5::{DataBits, FlowControl, Parity, SerialPort, StopBits};
 use std::io::{Read, Write};
 use std::sync::mpsc;
@@ -256,7 +258,8 @@ pub fn read<R: Runtime>(
         } else {
             match serialport_info.serialport.try_clone() {
                 Ok(mut serial) => {
-                    let read_event = format!("plugin-serialport-read-{}", &path);
+                    let encoded_path = STANDARD.encode(&path);
+                    let read_event = format!("plugin-serialport-read-{}", &encoded_path);
                     let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
                     serialport_info.sender = Some(tx);
                     thread::spawn(move || loop {
@@ -316,10 +319,7 @@ pub fn write<R: Runtime>(
         .write(value.as_bytes())
     {
         Ok(size) => Ok(size),
-        Err(error) => Err(Error::String(format!(
-            "write {} error: {}",
-            &path, error
-        ))),
+        Err(error) => Err(Error::String(format!("write {} error: {}", &path, error))),
     })
 }
 
@@ -337,9 +337,6 @@ pub fn write_binary<R: Runtime>(
         .write(&value)
     {
         Ok(size) => Ok(size),
-        Err(error) => Err(Error::String(format!(
-            "write {} error: {}",
-            &path, error
-        ))),
+        Err(error) => Err(Error::String(format!("write {} error: {}", &path, error))),
     })
 }
