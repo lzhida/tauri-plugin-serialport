@@ -146,7 +146,7 @@ function A(o, e) {
     });
   });
 }
-function O(o, e, t) {
+function E(o, e, t) {
   return r(this, void 0, void 0, function() {
     return a(this, function(i) {
       switch (i.label) {
@@ -174,7 +174,7 @@ function x(o, e, t) {
     });
   });
 }
-function T(o, e, t) {
+function O(o, e, t) {
   return r(this, void 0, void 0, function() {
     return a(this, function(i) {
       return [2, x(o, e, function(n) {
@@ -184,26 +184,26 @@ function T(o, e, t) {
     });
   });
 }
-var w, L = function(o, e) {
+var w, T = function(o, e) {
   this.type = "Logical", this.width = o, this.height = e;
 }, _ = function() {
   function o(e, t) {
     this.type = "Physical", this.width = e, this.height = t;
   }
   return o.prototype.toLogical = function(e) {
-    return new L(this.width / e, this.height / e);
+    return new T(this.width / e, this.height / e);
   }, o;
-}(), R = function(o, e) {
+}(), L = function(o, e) {
   this.type = "Logical", this.x = o, this.y = e;
 }, M = function() {
   function o(e, t) {
     this.type = "Physical", this.x = e, this.y = t;
   }
   return o.prototype.toLogical = function(e) {
-    return new R(this.x / e, this.y / e);
+    return new L(this.x / e, this.y / e);
   }, o;
 }();
-function E() {
+function R() {
   return window.__TAURI_METADATA__.__windows.map(function(o) {
     return new b(o.label, { skip: !0 });
   });
@@ -232,7 +232,7 @@ var g, z = ["tauri://created", "tauri://error"], C = function() {
         return this._handleTauriEvent(e, t) ? [2, Promise.resolve(function() {
           var s = i.listeners[e];
           s.splice(s.indexOf(t), 1);
-        })] : [2, T(e, this.label, t)];
+        })] : [2, O(e, this.label, t)];
       });
     });
   }, o.prototype.emit = function(e, t) {
@@ -244,7 +244,7 @@ var g, z = ["tauri://created", "tauri://error"], C = function() {
             (0, n[i])({ event: e, id: -1, windowLabel: this.label, payload: t });
           return [2, Promise.resolve()];
         }
-        return [2, O(e, this.label, t)];
+        return [2, E(e, this.label, t)];
       });
     });
   }, o.prototype._handleTauriEvent = function(e, t) {
@@ -621,7 +621,7 @@ var g, z = ["tauri://created", "tauri://error"], C = function() {
     }), n;
   }
   return P(e, o), e.getByLabel = function(t) {
-    return E().some(function(i) {
+    return R().some(function(i) {
       return i.label === t;
     }) ? new e(t, { skip: !0 }) : null;
   }, e;
@@ -720,7 +720,7 @@ class k {
    */
   async listen(e, t = !0) {
     await this.cancelListen();
-    let i = "plugin-serialport-read-" + this.options.path;
+    let i = "plugin-serialport-read-" + this.sanitizeEventName(this.options.path);
     this.unListen = await g.listen(
       i,
       ({ payload: n }) => {
@@ -815,6 +815,9 @@ class k {
       value: Array.from(e),
       path: this.options.path
     });
+  }
+  sanitizeEventName(e) {
+    return e.split("").map((t) => t === "." ? "_" : /[a-zA-Z0-9\-\/:_]/.test(t) ? t : "_").join("");
   }
 }
 export {

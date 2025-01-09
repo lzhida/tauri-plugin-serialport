@@ -8,6 +8,17 @@ use std::thread;
 use std::time::Duration;
 use tauri::{command, AppHandle, Runtime, State, Window};
 
+fn sanitize_event_name(input: &str) -> String {
+    input
+        .chars()
+        .map(|c| match c {
+            '.' => '_',                                                     // Replace '.' with '_'
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '/' | ':' | '_' => c, // Allow valid characters
+            _ => '_', // Replace any other invalid character with '_'
+        })
+        .collect()
+}
+
 /// `get_serialport` 根据 `path` 获取串口实例。
 fn get_serialport<T, F: FnOnce(&mut SerialportInfo) -> Result<T, Error>>(
     state: State<'_, SerialportState>,
@@ -256,7 +267,8 @@ pub fn read<R: Runtime>(
         } else {
             match serialport_info.serialport.try_clone() {
                 Ok(mut serial) => {
-                    let read_event = format!("plugin-serialport-read-{}", &path);
+                    let read_event =
+                        format!("plugin-serialport-read-{}", sanitize_event_name(&path));
                     let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
                     serialport_info.sender = Some(tx);
                     thread::spawn(move || loop {
@@ -316,10 +328,7 @@ pub fn write<R: Runtime>(
         .write(value.as_bytes())
     {
         Ok(size) => Ok(size),
-        Err(error) => Err(Error::String(format!(
-            "write {} error: {}",
-            &path, error
-        ))),
+        Err(error) => Err(Error::String(format!("write {} error: {}", &path, error))),
     })
 }
 
@@ -337,9 +346,6 @@ pub fn write_binary<R: Runtime>(
         .write(&value)
     {
         Ok(size) => Ok(size),
-        Err(error) => Err(Error::String(format!(
-            "write {} error: {}",
-            &path, error
-        ))),
+        Err(error) => Err(Error::String(format!("write {} error: {}", &path, error))),
     })
 }

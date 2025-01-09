@@ -1,6 +1,6 @@
-import { UnlistenFn } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/tauri';
-import { appWindow } from '@tauri-apps/api/window';
+import { UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/tauri";
+import { appWindow } from "@tauri-apps/api/window";
 
 export interface ReadDataResult {
   size: number;
@@ -12,8 +12,8 @@ export interface SerialportOptions {
   baudRate: number;
   encoding?: string;
   dataBits?: 5 | 6 | 7 | 8;
-  flowControl?: null | 'Software' | 'Hardware';
-  parity?: null | 'Odd' | 'Even';
+  flowControl?: null | "Software" | "Hardware";
+  parity?: null | "Odd" | "Even";
   stopBits?: 1 | 2;
   timeout?: number;
   size?: number;
@@ -22,8 +22,8 @@ export interface SerialportOptions {
 
 interface Options {
   dataBits: 5 | 6 | 7 | 8;
-  flowControl: null | 'Software' | 'Hardware';
-  parity: null | 'Odd' | 'Even';
+  flowControl: null | "Software" | "Hardware";
+  parity: null | "Odd" | "Even";
   stopBits: 1 | 2;
   timeout: number;
   [key: string]: any;
@@ -43,7 +43,7 @@ class Serialport {
 
   constructor(options: SerialportOptions) {
     const {
-      encoding = 'utf-8',
+      encoding = "utf-8",
       path,
       baudRate,
       dataBits = 8,
@@ -72,7 +72,7 @@ class Serialport {
    * @return
    */
   static async available_ports() {
-    return await invoke<string[]>('plugin:serialport|available_ports');
+    return await invoke<string[]>("plugin:serialport|available_ports");
   }
 
   /**
@@ -81,7 +81,7 @@ class Serialport {
    * @return
    */
   static async forceClose(path: string) {
-    return await invoke<void>('plugin:serialport|force_close', {
+    return await invoke<void>("plugin:serialport|force_close", {
       path,
     });
   }
@@ -91,7 +91,7 @@ class Serialport {
    * @return
    */
   static async closeAll() {
-    return await invoke<void>('plugin:serialport|close_all');
+    return await invoke<void>("plugin:serialport|close_all");
   }
 
   /**
@@ -110,7 +110,7 @@ class Serialport {
    * @return
    */
   async cancelRead() {
-    return await invoke<void>('plugin:serialport|cancel_read', {
+    return await invoke<void>("plugin:serialport|cancel_read", {
       path: this.options.path,
     });
   }
@@ -146,7 +146,7 @@ class Serialport {
       throw new Error(`${this.options.path} is not opened!`);
     }
     await this.cancelRead();
-    const res = await invoke<void>('plugin:serialport|close', {
+    const res = await invoke<void>("plugin:serialport|close", {
       path: this.options.path,
     });
 
@@ -162,7 +162,8 @@ class Serialport {
    */
   async listen(fn: (...args: any[]) => void, isDecode = true) {
     await this.cancelListen();
-    let readEvent = 'plugin-serialport-read-' + this.options.path;
+    let readEvent =
+      "plugin-serialport-read-" + this.sanitizeEventName(this.options.path);
     this.unListen = await appWindow.listen<ReadDataResult>(
       readEvent,
       ({ payload }) => {
@@ -177,7 +178,7 @@ class Serialport {
         } catch (error) {
           console.error(error);
         }
-      },
+      }
     );
   }
 
@@ -195,7 +196,7 @@ class Serialport {
     if (this.isOpen) {
       throw new Error(`${this.options.path} is already opened!`);
     }
-    const res = await invoke<void>('plugin:serialport|open', {
+    const res = await invoke<void>("plugin:serialport|open", {
       path: this.options.path,
       baudRate: this.options.baudRate,
       dataBits: this.options.dataBits,
@@ -214,7 +215,7 @@ class Serialport {
    * @return
    */
   async read(options?: ReadOptions) {
-    return await invoke<void>('plugin:serialport|read', {
+    return await invoke<void>("plugin:serialport|read", {
       path: this.options.path,
       timeout: options?.timeout || this.options.timeout,
       size: options?.size || this.size,
@@ -264,7 +265,7 @@ class Serialport {
     if (!this.isOpen) {
       throw new Error(`${this.options.path} is not opened!`);
     }
-    return await invoke<number>('plugin:serialport|write', {
+    return await invoke<number>("plugin:serialport|write", {
       value,
       path: this.options.path,
     });
@@ -280,12 +281,25 @@ class Serialport {
       throw new Error(`${this.options.path} is not opened!`);
     }
     if (!(value instanceof Uint8Array || value instanceof Array)) {
-      throw new Error('value 参数类型错误! 期望类型: Uint8Array, number[]');
+      throw new Error("value 参数类型错误! 期望类型: Uint8Array, number[]");
     }
-    return await invoke<number>('plugin:serialport|write_binary', {
+    return await invoke<number>("plugin:serialport|write_binary", {
       value: Array.from(value),
       path: this.options.path,
     });
+  }
+
+  sanitizeEventName(input: string): string {
+    return input
+      .split("")
+      .map((char) => {
+        if (char === ".") {
+          return "_"; // Replace '.' with '_'
+        }
+        // Allow only alphanumeric characters, '-', '/', ':', and '_'
+        return /[a-zA-Z0-9\-\/:_]/.test(char) ? char : "_";
+      })
+      .join("");
   }
 }
 
